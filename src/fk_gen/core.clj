@@ -54,8 +54,8 @@
                                             (values [table-values]))))))
                             [] path))
 
-        db-info->connection-uri (fn [{:keys [subprotocol subname user schema]}]
-                                  {:connection-uri (str "jdbc:" subprotocol ":" subname "?user=" user) :schema schema})]
+        db-info->connection-uri (fn [{:keys [subprotocol subname user schema password]}]
+                                  {:connection-uri (str "jdbc:" subprotocol ":" subname "?user=" user "&password=" password) :schema schema})]
 
     (do (-> (db-info->connection-uri db-info)
             (t/tables)
