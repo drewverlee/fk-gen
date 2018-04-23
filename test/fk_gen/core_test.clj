@@ -34,15 +34,12 @@
                                                 name text,
                                                 owner integer references persons(id));"]
       (jdbc/execute! db-info create-persons-table)
-      (Thread/sleep 20000)
       (jdbc/execute! db-info create-dogs-table)
-      (Thread/sleep 20000)
       ;; create foreign key deps for the dogs table and insert them into the db.
       (->> (fk-gen/create :dogs db-info)
            flatten
            (map #(sql/format %))
-           (map #(jdbc/execute! db-info %)))
-      (Thread/sleep 20000)
+           (run! #(jdbc/execute! db-info %)))
       (is (= 1
              (jdbc/query db-info ["SELECT COUNT(*) FROM dogs"] {:row-fn :count :result-set-fn first}))
           "the sql insert statements created weren't valid"))))
