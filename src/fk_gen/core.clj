@@ -23,6 +23,7 @@
          v (conj v n)]
      (when n (cons n (dfs (filterv #(not (v %)) (concat (pop nxs) (n g))) v g))))))
 
+
 ;;TODO not getting foreign key deps
 (defn create
   "Returns a vector of insert statements necessary to fulfill all the foreign key constraints of the given table
