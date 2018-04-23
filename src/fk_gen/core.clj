@@ -14,7 +14,7 @@
 ;; defines get-fk-deps
 (hugsql/def-db-fns "fk-deps.sql")
 
-(defn- dfs
+(defn dfs
   "returns a dfs search path"
   ([n g]
    (dfs [n] #{} g))
@@ -23,6 +23,8 @@
          v (conj v n)]
      (when n (cons n (dfs (filterv #(not (v %)) (concat (pop nxs) (n g))) v g))))))
 
+
+;;TODO not getting foreign key deps
 (defn create
   "Returns a vector of insert statements necessary to fulfill all the foreign key constraints of the given table
   table   :keyword : the root of the dependency tree graph you want to generate
@@ -35,11 +37,13 @@
                              (let [select-any {(keyword (str (name fk_table) "/" (name fk_column))) {:select [pk_column] :from [pk_table] :limit 1}}]
                                (-> (insert-into fk_table)
                                    (values [(merge table-values select-any)]))))
+
+        table->fk-deps (group-by :fk_table (keyify (get-fk-deps db-info)))
         fk-deps->graph (fn [table->fk-deps]
                          (->> table->fk-deps
                               (map (fn [[table fk-deps]]
-                                     {table (into #{} (map :pk_table fk-deps))}))))
-        table->fk-deps (group-by :fk_table (keyify (get-fk-deps db-info)))
+                                     {table (into #{} (map :pk_table fk-deps))}))
+                              (apply merge)))
         path->sql (fn [path]
                     (reduce (fn [c t]
                               (conj c
@@ -49,10 +53,18 @@
                                              fk-deps)
                                         (-> (insert-into t)
                                             (values [table-values]))))))
-                            [] path))]
-    (->> table->fk-deps
-         fk-deps->graph
-         (dfs table)
-         path->sql
-         reverse
-         flatten)))
+                            [] path))
+
+        db-info->connection-uri (fn [{:keys [subprotocol subname user schema password]}]
+                                  {:connection-uri (str "jdbc:" subprotocol ":" subname "?user=" user "&password=" password) :schema schema})]
+
+    (do (-> (db-info->connection-uri db-info)
+            (t/tables)
+            (t/register))
+
+        (->> table->fk-deps
+             fk-deps->graph
+             (dfs table)
+             path->sql
+             reverse))))
+
