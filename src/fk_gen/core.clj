@@ -14,14 +14,7 @@
 ;; defines get-fk-deps
 (hugsql/def-db-fns "fk-deps.sql")
 
-(defn dfs
-  "returns a dfs search path"
-  ([n g]
-   (dfs [n] #{} g))
-  ([nxs v g]
-   (let [n (peek nxs)
-         v (conj v n)]
-     (when n (cons n (dfs (filterv #(not (v %)) (concat (pop nxs) (n g))) v g))))))
+
 
 
 ;;TODO not getting foreign key deps
@@ -31,7 +24,14 @@
   db-info :hashmap : a map describing the database connection information
   "
   [table db-info]
-  (let [keyify (fn [coll] (map #(reduce-kv (fn [m k v] (assoc m k (keyword v))) {} %) coll))
+  (let [dfs (fn dfs
+              ([n g]
+               (dfs [n] #{} g))
+              ([nxs v g]
+               (let [n (peek nxs)
+                     v (conj v n)]
+                 (when n (cons n (dfs (filterv #(not (v %)) (concat (pop nxs) (n g))) v g))))))
+        keyify (fn [coll] (map #(reduce-kv (fn [m k v] (assoc m k (keyword v))) {} %) coll))
         generate (fn [t] (last (gen/sample (s/gen (keyword (str "table/" (name t)))) 30)))
         create-insert-stmt (fn [table-values {:keys [fk_table fk_column pk_table pk_column]}]
                              (let [select-any {(keyword (str (name fk_table) "/" (name fk_column))) {:select [pk_column] :from [pk_table] :limit 1}}]

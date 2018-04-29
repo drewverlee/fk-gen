@@ -1,0 +1,41 @@
+{:deps {com.layerware/hugsql {:mvn/version "0.4.8"}
+        org.postgresql/postgresql {:mvn/version "42.2.2"}
+        com.opentable.components/otj-pg-embedded {:mvn/version "0.7.1"}
+        org.clojure/java.jdbc {:mvn/version "0.7.5"}
+        table-spec {:local/root "../table-spec"}
+        nilenso/honeysql-postgres {:mvn/version "0.2.3" }
+        org.clojure/test.check {:mvn/version "0.9.0"}
+        org.clojure/clojure {:mvn/version "1.9.0"}
+        }
+ :user {:plugins {cider/cider-nrepl "0.14.0"
+                  com.billpiel/sayid "0.0.15"}
+        :dependencies {org.clojure/tools.nrepl "0.2.12"}}
+ :aliases
+  {:1.8 {:override-deps {org.clojure/clojure {:mvn/version "1.8.0"}}}
+   :1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
+   :master {:override-deps {org.clojure/clojure {:mvn/version "1.10.0-master-SNAPSHOT"}}}
+   :test {:extra-paths ["test" "src/test/clojure"]
+          :extra-deps {org.clojure/test.check {:mvn/version "0.9.0"}}}
+   :expect {:extra-deps {expectations {:mvn/version "RELEASE"}}}
+   :bench {:extra-deps {criterium {:mvn/version "RELEASE"}}}
+   ;; (require '[clj-memory-meter.core :as mm])
+   :measure {:extra-deps {com.clojure-goes-fast/clj-memory-meter {:mvn/version "RELEASE"}}}
+   :proto {:extra-deps {proto-repl {:mvn/version "RELEASE"}}}
+   :socket {:jvm-opts ["-Dclojure.server.repl={:port,5555,:accept,clojure.core.server/repl}"]}
+   :rebel {:extra-deps {com.bhauman/rebel-readline {:mvn/version "RELEASE"}}
+           :main-opts ["-m" "rebel-readline.main"]}
+   :nrepl {:extra-deps {org.clojure/tools.nrepl {:mvn/version "0.2.12"}}
+           :main-opts ["-e" "(require,'[clojure.tools.nrepl.server,:refer,[start-server]]),(start-server,:port,5555)"]}
+    :repl {:extra-deps 
+           {
+            cider/cider-nrepl       {:mvn/version "0.15.1"}
+            org.clojure/tools.nrepl {:mvn/version "0.2.12"}
+            refactor-nrepl          {:mvn/version "2.3.1"}}}
+  :runner
+  {:extra-deps {com.cognitect/test-runner
+                {:git/url "https://github.com/cognitect-labs/test-runner"
+                 :sha "76568540e7f40268ad2b646110f237a60295fa3c"}}
+   :main-opts ["-m" "cognitect.test-runner"
+               "-d" "test"
+               "-d" "src/test/clojure"]}}}
+
