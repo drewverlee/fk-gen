@@ -5,6 +5,7 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [com.layerware/hugsql "0.4.8"]
                  [org.postgresql/postgresql "42.2.2"]
+                 [com.rpl/specter "1.1.1"]
                  [org.clojure/java.jdbc "0.7.5"]
                  [viesti/table-spec "0.1.1"]
                  [nilenso/honeysql-postgres "0.2.3"]
