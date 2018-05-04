@@ -9,7 +9,6 @@
             [table-spec.core :as t]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [datascript.core :as d]
             [com.rpl.specter :refer [transform MAP-VALS ALL]]
             [clojure.string :as str]))
 
@@ -25,22 +24,22 @@
                             {} v)))
              {} (group-by :fk-table (transform [ALL MAP-VALS] keyword fk-deps))))
 
-(defn- dfs->path
+(defn- graph->dfs-path
   ([n f g]
-   (dfs->path [n] f #{} g))
+   (graph->dfs-path [n] f #{} g))
   ([nxs f v g]
    (let [n (peek nxs)
          v (conj v n)]
-     (when n (cons (f n g) (dfs->path (filterv #(not (v %)) (concat (pop nxs) (keys (g n)))) f v g))))))
+     (when n (cons (f n g) (graph->dfs-path (filterv #(not (v %)) (concat (pop nxs) (keys (g n)))) f v g))))))
 
 (defn- fk-deps->sql-plan
   [{:keys [table table-graph->insert-stmt-plan fk-deps]}]
   (->> fk-deps
        fk-deps->graph
-       (dfs->path table table-graph->insert-stmt-plan)
+       (graph->dfs-path table table-graph->insert-stmt-plan)
        reverse))
 
-(defn create
+(defn gen
   "Returns a vector of sql insert statement (honeysql format) necessary to fulfill all the foreign key constraints of the given table
   `table`                         :keyword : the name of the table
   `db-info`                       :hashmap : a map describing the database connection information see https://github.com/clojure/java.jdbc.
