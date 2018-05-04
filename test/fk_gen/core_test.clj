@@ -1,11 +1,14 @@
 (ns fk-gen.core-test
   (:require [clojure.test :refer :all]
             [fk-gen.core :as fk-gen]
+            [fk-gen.table-graph-to-sql :refer [->insert ->select-any]]
             [honeysql.core :as sql]
-            [clojure.java.jdbc :as jdbc])
+            [clojure.java.jdbc :as jdbc]
+            [clojure.spec.alpha :as s])
   (:import [com.opentable.db.postgres.embedded EmbeddedPostgres]))
 
-(defn with-postgres [f]
+(defn with-postgres
+  [f]
   (let [db (-> (EmbeddedPostgres/builder)
                (.setPort 3001)
                .start)
@@ -17,7 +20,8 @@
 
 (use-fixtures :once with-postgres)
 
-(deftest test-create
+;; TODO this should be moved into the app
+(deftest test-gen
   (testing "that given a table we can create a list of sql insert statements for it and all its dependencies"
     (let [db-info {:classname "org.postgresql.Driver"
                    :subprotocol "postgresql"
@@ -32,15 +36,16 @@
 
           create-dogs-table "CREATE TABLE dogs (id serial primary key,
                                                 name text,
-                                                owner integer references persons(id));"]
+                                                owner integer references persons(id));"
+          mock-table->values (fn [table graph] [(merge {:id 1 :name (str (name table) "-name")} (->select-any table graph))])
+          table-graph->insert-stmt-plan (partial ->insert mock-table->values)]
       (jdbc/execute! db-info create-persons-table)
       (jdbc/execute! db-info create-dogs-table)
       ;; create foreign key deps for the dogs table and insert them into the db.
-      (->> (fk-gen/create :dogs db-info)
+      (->> (fk-gen/gen {:table :dogs :db-info db-info :table-graph->insert-stmt-plan table-graph->insert-stmt-plan})
            flatten
            (map #(sql/format %))
            (run! #(jdbc/execute! db-info %)))
-      (is (= 1
-             (jdbc/query db-info ["SELECT COUNT(*) FROM dogs"] {:row-fn :count :result-set-fn first}))
-          "the sql insert statements created weren't valid"))))
-
+      (is (= {:dog_name "dogs-name" :person_name "persons-name"}
+             (jdbc/query db-info ["SELECT d.name as dog_name, p.name as person_name FROM dogs d JOIN persons p ON p.id = d.owner"] {:result-set-fn first}))
+          "the sql insert statements generated weren't valid"))))
