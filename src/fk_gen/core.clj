@@ -9,50 +9,41 @@
             [table-spec.core :as t]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
+            [com.rpl.specter :refer [transform MAP-VALS ALL]]
             [clojure.string :as str]))
 
-;; defines get-fk-deps
+;; defines function get-fk-deps
 (hugsql/def-db-fns "fk-deps.sql")
 
-(defn create
-  "Returns a vector of insert statements necessary to fulfill all the foreign key constraints of the given table
-  table   :keyword : the root of the dependency tree graph you want to generate
-  db-info :hashmap : a map describing the database connection information
-  "
-  [table db-info]
-  (let [dfs (fn dfs
-              ([n g]
-               (dfs [n] #{} g))
-              ([nxs v g]
-               (let [n (peek nxs)
-                     v (conj v n)]
-                 (when n (cons n (dfs (filterv #(not (v %)) (concat (pop nxs) (n g))) v g))))))
-        keyify (fn [coll] (map #(reduce-kv (fn [m k v] (assoc m k (keyword v))) {} %) coll))
-        generate (fn [t] (last (gen/sample (s/gen (keyword (str "table/" (name t)))) 30)))
-        create-insert-stmt (fn [table-values {:keys [fk_table fk_column pk_table pk_column]}]
-                             (let [select-any {(keyword (str (name fk_table) "/" (name fk_column))) {:select [pk_column] :from [pk_table] :limit 1}}]
-                               (-> (insert-into fk_table)
-                                   (values [(merge table-values select-any)]))))
-        fk-deps->graph (fn [table->fk-deps]
-                         (->> table->fk-deps
-                              (map (fn [[table fk-deps]]
-                                     {table (into #{} (map :pk_table fk-deps))}))))
-        table->fk-deps (group-by :fk_table (keyify (get-fk-deps db-info)))
-        path->sql (fn [path]
-                    (reduce (fn [c t]
-                              (conj c
-                                    (let [table-values (generate t)]
-                                      (if-let [fk-deps (t table->fk-deps)]
-                                        (map (fn [fk-table] (create-insert-stmt table-values fk-table))
-                                             fk-deps)
-                                        (-> (insert-into t)
-                                            (values [table-values]))))))
-                            [] path))
-        ]
+(defn- fk-deps->graph
+  [fk-deps]
+  (reduce-kv (fn [c fk v]
+               (assoc c fk (reduce
+                            (fn [x {:keys [fk-table pk-table fk-column pk-column]}]
+                              (assoc x pk-table {:fk-column fk-column :pk-column pk-column}))
+                            {} v)))
+             {} (group-by :fk-table (transform [ALL MAP-VALS] keyword fk-deps))))
 
-    (->> table->fk-deps ;; transform the table provided by the caller into mapping from tables to their foreign key dependencies
-         fk-deps->graph ;; then transform this 
-         (dfs table)
-         path->sql
-         reverse
-         flatten)))
+(defn- graph->dfs-path
+  ([n f g]
+   (graph->dfs-path [n] f #{} g))
+  ([nxs f v g]
+   (let [n (peek nxs)
+         v (conj v n)]
+     (when n (cons (f n g) (graph->dfs-path (filterv #(not (v %)) (concat (pop nxs) (keys (g n)))) f v g))))))
+
+(defn- fk-deps->sql-plan
+  [{:keys [table table-graph->insert-stmt-plan fk-deps]}]
+  (->> fk-deps
+       fk-deps->graph
+       (graph->dfs-path table table-graph->insert-stmt-plan)
+       reverse))
+
+(defn gen
+  "Returns a vector of sql insert statement (honeysql format) necessary to fulfill all the foreign key constraints of the given table
+  `table`                         :keyword : the name of the table
+  `db-info`                       :hashmap : a map describing the database connection information see https://github.com/clojure/java.jdbc.
+  `table-graph->insert-stmt-plan` :fn      : a two arity function that takes a table and graph and returns a vector of honeysql formatted insert statements
+  "
+  [{:keys [db-info table table-graph->insert-stmt-plan]}]
+  (fk-deps->sql-plan {:table table :table-graph->insert-stmt-plan table-graph->insert-stmt-plan :fk-deps (get-fk-deps db-info)}))
