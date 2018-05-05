@@ -42,7 +42,7 @@
       (jdbc/execute! db-info create-persons-table)
       (jdbc/execute! db-info create-dogs-table)
       ;; create foreign key deps for the dogs table and insert them into the db.
-      (->> (fk-gen/gen {:table :dogs :db-info db-info :table-graph->insert-stmt-plan table-graph->insert-stmt-plan})
+      (->> (fk-gen/generate {:table :dogs :db-info db-info :table-graph->insert-stmt-plan table-graph->insert-stmt-plan})
            flatten
            (map #(sql/format %))
            (run! #(jdbc/execute! db-info %)))
