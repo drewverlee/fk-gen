@@ -1,6 +1,6 @@
 # fk-gen
 
-[documentation](https://drewverlee.github.io/fk-gen/docs.html)
+Click -> [documentation](https://drewverlee.github.io/fk-gen/docs.html) <-
 
 # Development 
 
