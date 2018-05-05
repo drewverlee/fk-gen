@@ -1,3 +1,50 @@
+;; ## Value proposition
+;; You should only have to care about the data in the database that you ... care about.
+;; But often, you have to care about more because the database has some constraints that you have to meet.
+;; This library handles *some* of those constraints for you by generating data that satisfies them.
+
+;; ## Introducing "Foreign Key Generator" or fk-gen for short
+;; This library helps generate sql statments that fulfill two constraints
+;;
+;; 1. data types  : e.g column's values are of type int
+;; 2. foreign key : column's values match another value in another table's column
+
+;; ## Using the library
+
+;; It does this with only a little help from you. Mainly you have to tell it:
+;;
+;; 1. How to connect to the database. So host, port, etc..
+;; 2. Which table you wish to generate insert statments for.
+;; 3. A function for how to handle the foreign key dependencies
+;;
+;; Don't worry about the third point (the function) will provide one of those for you.
+
+;; ### Example
+;; Lets say you have a database with two tables
+;;
+;; 1. dogs
+;; 2. persons
+
+;; where a dog has to have a owner. A _constraint_ that is enforced through a foreign key dependency
+;;
+;; dogs -> persons
+
+;; When you use this library you can expect to get sql that full fills this constraint. E.g a list of sql insert statments like...
+
+;; 1. "insert into persons (id) values (101)"
+;; 2. "insert into dogs (id, person) values (1, 101)"
+
+;; The clojure code for doing this looks like you might expect:
+
+;; Given the graph with the structure like:
+;; <pre><code>
+;;  (fk-gen/generate
+;;    {:table :dogs
+;;     :db-info db-info
+;;     :table-graph->insert-stmt-plan table-graph->insert-stmt-plan})
+;; </code></pre>
+;; which outputs a fairly hard to read vector of [honeySql](https://github.com/jkk/honeysql) formatted sql insert statments, which you can use to populate
+;; your database with values.
 (ns fk-gen.core
   (:require [clojure.set :as set]
             [hugsql.core :as hugsql]
@@ -12,9 +59,16 @@
             [com.rpl.specter :refer [transform MAP-VALS ALL]]
             [clojure.string :as str]))
 
-;; defines function get-fk-deps
+;; ## Understanding how the library works
+;; What follows is a overview of how this library works internally and so can be happily ignored if your just a consumer of the functionality.
+
+;; ### Get the foreign key dependencies
+;; This is made possible by first extracting foreign key information from the database
+;; through a sql function which we can call called `get-fk-deps` which is brought into our namespace here
 (hugsql/def-db-fns "fk-deps.sql")
 
+;; ### Transform foreign key dependencies into a graph
+;; Once we have the foreign key dependencies we need to put them into a structure that is easy to traverse so we turn it into a graph.
 (defn- fk-deps->graph
   [fk-deps]
   (reduce-kv (fn [c fk v]
@@ -24,14 +78,30 @@
                             {} v)))
              {} (group-by :fk-table (transform [ALL MAP-VALS] keyword fk-deps))))
 
+;; ### Transform the graph into our sql insert statments
+;; Given the graph with the structure like:
+;; <pre><code>
+;; {:dogs {:persons {:fk-column :owner :pk-column :id}}}
+;; </code></pre>
+
+;;we can do a depth first search walk on it and on each node (table) use our table-graph->sql->insert-stmt-plan function which takes the
+;; current table and the graph and produces a sql insert statments
+
+;; Sense these sql insert statments are ordered by walking our dependency graph, we can simply reverse that ordering and insert them to full fill the database
+;; constraints.
 (defn- graph->dfs-path
   ([n f g]
    (graph->dfs-path [n] f #{} g))
   ([nxs f v g]
    (let [n (peek nxs)
          v (conj v n)]
-     (when n (cons (f n g) (graph->dfs-path (filterv #(not (v %)) (concat (pop nxs) (keys (g n)))) f v g))))))
+     (when n (cons (f n g)
+                   (graph->dfs-path
+                    (filterv #(not (v %))
+                             (concat (pop nxs) (keys (g n))))
+                    f v g))))))
 
+;; This function helps separate out side effects and ties everything together
 (defn- fk-deps->sql-plan
   [{:keys [table table-graph->insert-stmt-plan fk-deps]}]
   (->> fk-deps
@@ -39,11 +109,14 @@
        (graph->dfs-path table table-graph->insert-stmt-plan)
        reverse))
 
-(defn gen
+;; This all gets wrapped into a single public function that users can call. The description below just re-iterates the story above.
+(defn generate
   "Returns a vector of sql insert statement (honeysql format) necessary to fulfill all the foreign key constraints of the given table
   `table`                         :keyword : the name of the table
   `db-info`                       :hashmap : a map describing the database connection information see https://github.com/clojure/java.jdbc.
   `table-graph->insert-stmt-plan` :fn      : a two arity function that takes a table and graph and returns a vector of honeysql formatted insert statements
   "
   [{:keys [db-info table table-graph->insert-stmt-plan]}]
-  (fk-deps->sql-plan {:table table :table-graph->insert-stmt-plan table-graph->insert-stmt-plan :fk-deps (get-fk-deps db-info)}))
+  (fk-deps->sql-plan {:table table
+                      :table-graph->insert-stmt-plan table-graph->insert-stmt-plan
+                      :fk-deps (get-fk-deps db-info)}))

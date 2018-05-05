@@ -16,4 +16,4 @@ resources/setup.sql
 test/fk_gen/dev.clj
 .cpcache/
 .cpcache
-
+/docs
