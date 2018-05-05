@@ -2967,36 +2967,60 @@ constraints.</p>
                    (graph-&gt;dfs-path
                     (filterv #(not (v %))
                              (concat (pop nxs) (keys (g n))))
-                    f v g))))))</pre></td></tr><tr><td class="docs"><p>This function helps separate out side effects and ties everything together</p>
+                    f v g))))))</pre></td></tr><tr><td class="docs"><p>We wrap that functionality together into a side effect free function</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- fk-deps-&gt;sql-plan
   [{:keys [table table-graph-&gt;insert-stmt-plan fk-deps]}]
   (-&gt;&gt; fk-deps
        fk-deps-&gt;graph
        (graph-&gt;dfs-path table table-graph-&gt;insert-stmt-plan)
-       reverse))</pre></td></tr><tr><td class="docs"><p>Returns a vector of sql insert statement (honeysql format) necessary to fulfill all the foreign key constraints of the given table
+       reverse))</pre></td></tr><tr><td class="docs"><p>and finally we wrap that into a public facing function that does have side effects (namely <code>get-fk-deps</code>).</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a vector of sql insert statement (honeysql format) necessary to fulfill all the foreign key constraints of the given table
   <code>table</code>                         :keyword : the name of the table
   <code>db-info</code>                       :hashmap : a map describing the database connection information see https://github.com/clojure/java.jdbc.
   <code>table-graph-&gt;insert-stmt-plan</code> :fn      : a two arity function that takes a table and graph and returns a vector of honeysql formatted insert statements</p>
-
-<p>This all gets wrapped into a single public function that users can call. The description below just re-iterates the story above.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn generate
   [{:keys [db-info table table-graph-&gt;insert-stmt-plan]}]
   (fk-deps-&gt;sql-plan {:table table
                       :table-graph-&gt;insert-stmt-plan table-graph-&gt;insert-stmt-plan
-                      :fk-deps (get-fk-deps db-info)}))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#fk-gen.table-graph-to-sql" name="fk-gen.table-graph-to-sql"><h1 class="project-name">fk-gen.table-graph-to-sql</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>These functions can be used to build a
+                      :fk-deps (get-fk-deps db-info)}))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#fk-gen.table-graph-to-sql" name="fk-gen.table-graph-to-sql"><h1 class="project-name">fk-gen.table-graph-to-sql</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Overcoming the constraints</h3>
+
+<p>on the last leg of our journey we need to find a way to actually create sql insert statments.
+What follows will describe how to do this in general while creating some functions you can use to get
+you started or serve as a default. We call the function that produces these insert statements: <code>table-graph-&gt;insert-stmt-plan</code></p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The functions in this namespace can be used to build a
   <code>table-graph-&gt;insert-stmt-plan</code> function which fulfills its contract of taking a <code>graph</code> and <code>table</code> and
   returning a vector of honeySQL insert statements. Check the core_test for an example of how this is done.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns fk-gen.table-graph-to-sql
-  (:require [honeysql.helpers :refer [insert-into values]]))</pre></td></tr><tr><td class="docs"><p>Returns a vector of select any sql statements</p>
+  (:require [honeysql.helpers :refer [insert-into values]]))</pre></td></tr><tr><td class="docs"><p>One sensible way to implement the table-graph->insert-stmt-plan fn is to generate a sql select statement (honeySQL format)
+that will be used to create a value that meets the foreign key dependency constraint. This function is used to achieve just that.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a vector of select any sql statements</p>
 </td><td class="codes"><pre class="brush: clojure">(defn -&gt;select-any
   [table graph]
   (reduce-kv (fn [values pk-table {:keys [fk-column pk-column]}]
                (assoc values fk-column {:select [pk-column] :from [pk-table] :limit 1}))
-             {} (graph table)))</pre></td></tr><tr><td class="docs"><p>returns a vector of insert sql statements</p>
+             {} (graph table)))</pre></td></tr><tr><td class="docs"><p>Now that you have a way to generate select any statements you still need a way to create the actual sql insert statments.
+thats where <code>-&gt;insert</code> comes in. Which is really just a honeySQL code. </p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>returns a vector of insert sql statements</p>
 </td><td class="codes"><pre class="brush: clojure">(defn -&gt;insert
   [table-&gt;values table graph]
   (-&gt; (insert-into table)
-      (values (table-&gt;values table graph))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_fk-gen.core">fk-gen.core</li><li class="floating-toc-li" id="floating-toc_fk-gen.table-graph-to-sql">fk-gen.table-graph-to-sql</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+      (values (table-&gt;values table graph))))</pre></td></tr><tr><td class="docs"><p>If your paying attention you have probably noticed we never showed how to generate values that fullfil the data type constraint.
+Thats because most of that is done by another library called <a href="https://github.com/viesti/table-spec">table-spec</a>.
+You should read those docs and take away that idea that your going to register your db and produce generators for each table you have.
+You can use these generators inside your <code>table-graph-&gt;insert-stmt-plan</code> function to generate values. something like...
+gen here refers to clojure spec gen</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><pre><code>
+(defn gen-value
+  [t]
+  (last (gen/sample (s/gen :table/dogs) 30)))
+</code></pre>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>which you can use to generate values and then just override them with select any statements when its a foreign key constraint</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><pre><code>
+(def table-graph->insert-stmt-plan
+  (partial ->insert (fn [table graph] [(merge (gen-value table) (->select-any table graph))])))
+</code></pre>
+</td><td class="codes"></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_fk-gen.core">fk-gen.core</li><li class="floating-toc-li" id="floating-toc_fk-gen.table-graph-to-sql">fk-gen.table-graph-to-sql</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

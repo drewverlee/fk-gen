@@ -105,7 +105,8 @@
                              (concat (pop nxs) (keys (g n))))
                     f v g))))))
 
-;; This function helps separate out side effects and ties everything together
+;; We wrap that functionality together into a side effect free function
+
 (defn- fk-deps->sql-plan
   [{:keys [table table-graph->insert-stmt-plan fk-deps]}]
   (->> fk-deps
@@ -113,7 +114,8 @@
        (graph->dfs-path table table-graph->insert-stmt-plan)
        reverse))
 
-;; This all gets wrapped into a single public function that users can call. The description below just re-iterates the story above.
+;; and finally we wrap that into a public facing function that does have side effects (namely `get-fk-deps`).
+
 (defn generate
   "Returns a vector of sql insert statement (honeysql format) necessary to fulfill all the foreign key constraints of the given table
   `table`                         :keyword : the name of the table
