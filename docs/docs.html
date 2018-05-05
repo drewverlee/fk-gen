@@ -2866,7 +2866,7 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>fk-gen -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">fk-gen</h1><h2 class="project-version">0.1.0-alpha</h2><br /><p>Generates insert statements for a postgres table and all its foreign key dependencies.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.9.0</td></tr><tr><td class="dep-name">com.layerware/hugsql</td><td class="dotted"><hr /></td><td class="dep-version">0.4.8</td></tr><tr><td class="dep-name">org.postgresql/postgresql</td><td class="dotted"><hr /></td><td class="dep-version">42.2.2</td></tr><tr><td class="dep-name">com.rpl/specter</td><td class="dotted"><hr /></td><td class="dep-version">1.1.1</td></tr><tr><td class="dep-name">org.clojure/java.jdbc</td><td class="dotted"><hr /></td><td class="dep-version">0.7.6</td></tr><tr><td class="dep-name">viesti/table-spec</td><td class="dotted"><hr /></td><td class="dep-version">0.1.1</td></tr><tr><td class="dep-name">nilenso/honeysql-postgres</td><td class="dotted"><hr /></td><td class="dep-version">0.2.3</td></tr><tr><td class="dep-name">org.clojure/test.check</td><td class="dotted"><hr /></td><td class="dep-version">0.9.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#fk-gen.core">fk-gen.core</a></li><li><a href="#fk-gen.table-graph-to-sql">fk-gen.table-graph-to-sql</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#fk-gen.core" name="fk-gen.core"><h1 class="project-name">fk-gen.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Value proposition</h2>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.9.0</td></tr><tr><td class="dep-name">com.layerware/hugsql</td><td class="dotted"><hr /></td><td class="dep-version">0.4.8</td></tr><tr><td class="dep-name">org.postgresql/postgresql</td><td class="dotted"><hr /></td><td class="dep-version">42.2.2</td></tr><tr><td class="dep-name">com.rpl/specter</td><td class="dotted"><hr /></td><td class="dep-version">1.1.1</td></tr><tr><td class="dep-name">org.clojure/java.jdbc</td><td class="dotted"><hr /></td><td class="dep-version">0.7.6</td></tr><tr><td class="dep-name">nilenso/honeysql-postgres</td><td class="dotted"><hr /></td><td class="dep-version">0.2.3</td></tr><tr><td class="dep-name">org.clojure/test.check</td><td class="dotted"><hr /></td><td class="dep-version">0.9.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#fk-gen.core">fk-gen.core</a></li><li><a href="#fk-gen.table-graph-to-sql">fk-gen.table-graph-to-sql</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#fk-gen.core" name="fk-gen.core"><h1 class="project-name">fk-gen.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Value proposition</h2>
 
 <p>You should only have to care about the data in the database that you ... care about.
 But often, you have to care about more because the database has some constraints that you have to meet.
@@ -2917,6 +2917,7 @@ This library handles <em>some</em> of those constraints for you by generating da
 
 <p>which outputs a fairly hard to read vector of <a href="https://github.com/jkk/honeysql">honeySql</a> formatted sql insert statments, which you can use to populate
 your database with values.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Contains all the functionality to get and transform the foreign key dependencies</p>
 </td><td class="codes"><pre class="brush: clojure">(ns fk-gen.core
   (:require [clojure.set :as set]
             [hugsql.core :as hugsql]
@@ -2925,7 +2926,6 @@ your database with values.</p>
             [honeysql-postgres.format :refer :all]
             [honeysql-postgres.helpers :refer :all]
             [clojure.java.jdbc :as j]
-            [table-spec.core :as t]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [com.rpl.specter :refer [transform MAP-VALS ALL]]

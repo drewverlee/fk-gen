@@ -45,7 +45,12 @@
 ;; </code></pre>
 ;; which outputs a fairly hard to read vector of [honeySql](https://github.com/jkk/honeysql) formatted sql insert statments, which you can use to populate
 ;; your database with values.
+;;
+;;
+;;
+
 (ns fk-gen.core
+  "Contains all the functionality to get and transform the foreign key dependencies"
   (:require [clojure.set :as set]
             [hugsql.core :as hugsql]
             [honeysql.core :as sql]
@@ -53,7 +58,6 @@
             [honeysql-postgres.format :refer :all]
             [honeysql-postgres.helpers :refer :all]
             [clojure.java.jdbc :as j]
-            [table-spec.core :as t]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [com.rpl.specter :refer [transform MAP-VALS ALL]]
