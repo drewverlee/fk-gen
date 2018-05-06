@@ -1,5 +1,7 @@
 # fk-gen
 
+[![CircleCI](https://circleci.com/gh/drewverlee/fk-gen/tree/master.svg?style=svg)](https://circleci.com/gh/drewverlee/fk-gen/tree/master)
+
 Please read the literate programming [documentation](https://drewverlee.github.io/fk-gen/docs.html) <-
 
 # Development 
