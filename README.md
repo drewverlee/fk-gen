@@ -1,10 +1,12 @@
 # fk-gen
 
-Click -> [documentation](https://drewverlee.github.io/fk-gen/docs.html) <-
+Please read the literate programming [documentation](https://drewverlee.github.io/fk-gen/docs.html) <-
 
 # Development 
 
-I suggest reading the "documentation" first
+1. Read docs
+2. Create an issue
+3. Open a pull request
 
 ## Issues?
 
@@ -12,7 +14,7 @@ See github issues
 
 ## Testing
 
-`lein test`
+Run `lein test`
 
 ## License
 
