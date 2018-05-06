@@ -1,4 +1,4 @@
-(defproject fk-gen "0.1.0-alpha"
+(defproject fk-gen "0.2.0-alpha"
   :description "Generates insert statements for a postgres table and all its foreign key dependencies."
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
