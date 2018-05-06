@@ -52,15 +52,7 @@
   "Contains all the functionality to get and transform the foreign key dependencies"
   (:require [clojure.set :as set]
             [hugsql.core :as hugsql]
-            [honeysql.core :as sql]
-            [honeysql.helpers :refer :all :as helpers]
-            [honeysql-postgres.format :refer :all]
-            [honeysql-postgres.helpers :refer :all]
-            [clojure.java.jdbc :as j]
-            [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]
-            [com.rpl.specter :refer [transform MAP-VALS ALL]]
-            [clojure.string :as str]))
+            [com.rpl.specter :refer [transform MAP-VALS ALL]]))
 
 ;; ## Understanding how the library works
 ;; What follows is a overview of how this library works internally and so can be happily ignored if your just a consumer of the functionality.
