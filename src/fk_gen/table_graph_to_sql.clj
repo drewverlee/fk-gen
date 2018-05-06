@@ -38,7 +38,7 @@
 ;; <pre><code>
 ;; (defn gen-value
 ;;   [t]
-;;   (last (gen/sample (s/gen :table/dogs) 30)))
+;;   (last (gen/sample (s/gen t) 30)))
 ;; </code></pre>
 
 ;; which you can use to generate values and then just override them with select any statements when its a foreign key constraint
@@ -47,3 +47,4 @@
 ;; (def table-graph->insert-stmt-plan
 ;;   (partial ->insert (fn [table graph] [(merge (gen-value table) (->select-any table graph))])))
 ;; </code></pre>
+

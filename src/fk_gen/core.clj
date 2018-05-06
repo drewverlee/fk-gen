@@ -48,7 +48,6 @@
 ;;
 ;;
 ;;
-
 (ns fk-gen.core
   "Contains all the functionality to get and transform the foreign key dependencies"
   (:require [clojure.set :as set]
@@ -106,7 +105,6 @@
                     f v g))))))
 
 ;; We wrap that functionality together into a side effect free function
-
 (defn- fk-deps->sql-plan
   [{:keys [table table-graph->insert-stmt-plan fk-deps]}]
   (->> fk-deps
@@ -115,7 +113,6 @@
        reverse))
 
 ;; and finally we wrap that into a public facing function that does have side effects (namely `get-fk-deps`).
-
 (defn generate
   "Returns a vector of sql insert statement (honeysql format) necessary to fulfill all the foreign key constraints of the given table
   `table`                         :keyword : the name of the table

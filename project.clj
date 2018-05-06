@@ -11,4 +11,4 @@
                  [nilenso/honeysql-postgres "0.2.3"]
                  [org.clojure/test.check "0.9.0"]]
   :profiles {:dev {:dependencies  [[com.opentable.components/otj-pg-embedded "0.12.0"]]}}
-  :plugins [[lein-marginalia "0.9.1"]]) 
+  :plugins [[lein-marginalia "0.9.1"]])
