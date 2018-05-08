@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [com.layerware/hugsql "0.4.8"]
-                 [drewverlee/table-spec "0.1.2-SNAPSHOT"]
+                 [drewverlee/table-spec "0.1.3"]
                  [nilenso/honeysql-postgres "0.2.3"]
                  [com.rpl/specter "1.1.1"]
                  [org.clojure/test.check "0.9.0"]]
