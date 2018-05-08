@@ -27,7 +27,9 @@
   `db-info` :hashmap : a map describing the database connection information see https://github.com/clojure/java.jdbc."
   [{:keys [db-info table] :as db-args}]
   (let [db-info->connection-uri (fn [{:keys [subprotocol subname user schema password]}]
-                                  {:connection-uri (str "jdbc:" subprotocol ":" subname "?user=" user "&password=" password)
+                                  {:connection-uri (str "jdbc:" subprotocol ":" 
+                                                        subname "?user=" 
+                                                        user "&password=" password)
                                    :schema schema})
         gen-values (fn [table]
                      (transform [MAP-KEYS] #(keyword (name %))
