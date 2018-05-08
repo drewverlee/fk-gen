@@ -6,7 +6,7 @@
 (ns fk-gen.table-graph-to-sql
   "The functions in this namespace can be used to build a
   `table-graph->insert-stmt-plan` function which fulfills its contract of taking a `graph` and `table` and
-  returning a vector of honeySQL insert statements. Check the core_test for an example of how this is done."
+  returning a vector of honeySQL insert statements. "
   (:require [honeysql.helpers :refer [insert-into values]]))
 
 
@@ -31,20 +31,5 @@
 
 ;; If your paying attention you have probably noticed we never showed how to generate values that fullfil the data type constraint.
 ;; Thats because most of that is done by another library called [table-spec](https://github.com/viesti/table-spec).
-;; You should read those docs and take away that idea that your going to register your db and produce generators for each table you have.
-;; You can use these generators inside your `table-graph->insert-stmt-plan` function to generate values. something like...
-;; gen here refers to clojure spec gen
-
-;; <pre><code>
-;; (defn gen-value
-;;   [t]
-;;   (last (gen/sample (s/gen t) 30)))
-;; </code></pre>
-
-;; which you can use to generate values and then just override them with select any statements when its a foreign key constraint
-
-;; <pre><code>
-;; (def table-graph->insert-stmt-plan
-;;   (partial ->insert (fn [table graph] [(merge (gen-value table) (->select-any table graph))])))
-;; </code></pre>
+;; Examples of how to use the functionality in fk-gen can be seen in [fk-gen-example](TODO)
 

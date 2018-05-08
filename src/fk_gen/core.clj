@@ -19,6 +19,7 @@
 ;;
 ;; Don't worry about the third point (the function) will provide one of those for you.
 
+
 ;; ### Example
 ;; Lets say you have a database with two tables
 ;;
@@ -36,31 +37,21 @@
 
 ;; The clojure code for doing this looks like you might expect:
 
-;; Given the graph with the structure like:
 ;; <pre><code>
-;;  (fk-gen/generate
-;;    {:table :dogs
-;;     :db-info db-info
-;;     :table-graph->insert-stmt-plan table-graph->insert-stmt-plan})
+;;  (generate/->sql-and-insert! {:table :dogs :db-info db-info)
 ;; </code></pre>
-;; which outputs a fairly hard to read vector of [honeySql](https://github.com/jkk/honeysql) formatted sql insert statments, which you can use to populate
-;; your database with values.
 ;;
+;; Inserts sql insert statements that full fill all the foreign key dependencies of the table.
+;; I suggest jumping to either the test (core_test.clj) for a working example or the fk-gen.generate namespace for the public facing functionality
 ;;
 ;;
 (ns fk-gen.core
   "Contains all the functionality to get and transform the foreign key dependencies"
   (:require [clojure.set :as set]
             [hugsql.core :as hugsql]
-            [honeysql.core :as sql]
-            [honeysql.helpers :refer :all :as helpers]
-            [honeysql-postgres.format :refer :all]
-            [honeysql-postgres.helpers :refer :all]
-            [clojure.java.jdbc :as j]
-            [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]
-            [com.rpl.specter :refer [transform MAP-VALS ALL]]
-            [clojure.string :as str]))
+            [com.rpl.specter :refer [transform MAP-VALS ALL]]))
+
+
 
 ;; ## Understanding how the library works
 ;; What follows is a overview of how this library works internally and so can be happily ignored if your just a consumer of the functionality.
@@ -105,21 +96,9 @@
                     f v g))))))
 
 ;; We wrap that functionality together into a side effect free function
-(defn- fk-deps->sql-plan
+(defn fk-deps->sql-plan
   [{:keys [table table-graph->insert-stmt-plan fk-deps]}]
   (->> fk-deps
        fk-deps->graph
        (graph->dfs-path table table-graph->insert-stmt-plan)
        reverse))
-
-;; and finally we wrap that into a public facing function that does have side effects (namely `get-fk-deps`).
-(defn generate
-  "Returns a vector of sql insert statement (honeysql format) necessary to fulfill all the foreign key constraints of the given table
-  `table`                         :keyword : the name of the table
-  `db-info`                       :hashmap : a map describing the database connection information see https://github.com/clojure/java.jdbc.
-  `table-graph->insert-stmt-plan` :fn      : a two arity function that takes a table and graph and returns a vector of honeysql formatted insert statements
-  "
-  [{:keys [db-info table table-graph->insert-stmt-plan]}]
-  (fk-deps->sql-plan {:table table
-                      :table-graph->insert-stmt-plan table-graph->insert-stmt-plan
-                      :fk-deps (get-fk-deps db-info)}))
