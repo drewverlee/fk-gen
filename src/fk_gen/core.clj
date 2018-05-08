@@ -44,7 +44,6 @@
 ;; Inserts sql insert statements that full fill all the foreign key dependencies of the table.
 ;; I suggest jumping to either the test (core_test.clj) for a working example or the fk-gen.generate namespace for the public facing functionality
 ;;
-;;
 (ns fk-gen.core
   "Contains all the functionality to get and transform the foreign key dependencies"
   (:require [clojure.set :as set]
