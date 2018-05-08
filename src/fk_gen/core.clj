@@ -38,7 +38,8 @@
 ;; The clojure code for doing this looks like you might expect:
 
 ;; <pre><code>
-;;  (generate/->sql-and-insert! {:table :dogs :db-info db-info)
+;; (->sql-and-insert! {:table :dogs 
+;;                     :db-info db-info)
 ;; </code></pre>
 ;;
 ;; Inserts sql insert statements that full fill all the foreign key dependencies of the table.
@@ -74,7 +75,8 @@
 ;; ### Transform the graph into our sql insert statments
 ;; Given the graph with the structure like:
 ;; <pre><code>
-;; {:dogs {:persons {:fk-column :owner :pk-column :id}}}
+;; {:dogs {:persons {:fk-column :owner 
+;;                   :pk-column :id}}}
 ;; </code></pre>
 
 ;;we can do a depth first search walk on it and on each node (table) use our table-graph->sql->insert-stmt-plan function which takes the

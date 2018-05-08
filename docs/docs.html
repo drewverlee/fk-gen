@@ -2909,7 +2909,8 @@ This library handles <em>some</em> of those constraints for you by generating da
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Contains all the functionality to get and transform the foreign key dependencies</p>
 
 <pre><code>
- (generate/->sql-and-insert! {:table :dogs :db-info db-info)
+(->sql-and-insert! {:table :dogs 
+                    :db-info db-info)
 </code></pre>
 
 <p>Inserts sql insert statements that full fill all the foreign key dependencies of the table.
@@ -2939,7 +2940,8 @@ through a sql function which we can call called <code>get-fk-deps</code> which i
 <p>Given the graph with the structure like:</p>
 
 <pre><code>
-{:dogs {:persons {:fk-column :owner :pk-column :id}}}
+{:dogs {:persons {:fk-column :owner 
+                  :pk-column :id}}}
 </code></pre>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>we can do a depth first search walk on it and on each node (table) use our table-graph->sql->insert-stmt-plan function which takes the
 current table and the graph and produces a sql insert statments</p>
