@@ -2987,7 +2987,9 @@ This namespace brings together all the functionality and is here users of librar
 </td><td class="codes"><pre class="brush: clojure">(defn -&gt;sql
   [{:keys [db-info table] :as db-args}]
   (let [db-info-&gt;connection-uri (fn [{:keys [subprotocol subname user schema password]}]
-                                  {:connection-uri (str &quot;jdbc:&quot; subprotocol &quot;:&quot; subname &quot;?user=&quot; user &quot;&amp;password=&quot; password)
+                                  {:connection-uri (str &quot;jdbc:&quot; subprotocol &quot;:&quot; 
+                                                        subname &quot;?user=&quot; 
+                                                        user &quot;&amp;password=&quot; password)
                                    :schema schema})
         gen-values (fn [table]
                      (transform [MAP-KEYS] #(keyword (name %))
