@@ -1,4 +1,4 @@
-(defproject fk-gen "0.3.2-alpha"
+(defproject fk-gen "0.3.3-alpha"
   :description "Generates insert statements for a postgres table and all its foreign key dependencies."
   :url "https://github.com/drewverlee/fk-gen"
   :license {:name "Eclipse Public License"
